@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Details #{{question.id}}</title>
   </head>
   <body>
-    <h1>#{{details.id}}</h1>
-    <h2>{{details.question_text}}</h2>
-    <ul>
-      {% for choice in details.choice_set.all %} {{ choice.choice_text }}
-      {%endfor%}
-    </ul>
+    <h1>#{{question.id}}</h1>
+    <h2>{{question.question_text}}</h2>
+    
+    <form action="{% url 'polls:vote' question.id %}" method="post">
+      {% csrf_token %}
+      <fieldset>
+          <legend><h1>{{ question.question_text }}</h1></legend>
+          {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+          {% for choice in question.choice_set.all %}
+              <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
+              <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
+          {% endfor %}
+      </fieldset>
+      <input type="submit" value="Vote">
+      </form>
   </body>
 </html>

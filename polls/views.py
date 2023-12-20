@@ -1,6 +1,16 @@
-from django.shortcuts import HttpResponse, render, get_list_or_404, get_object_or_404
-from django.http import HttpRequest
-from .models import Question
+from typing import Any
+from django.db.models.query import QuerySet
+from django.shortcuts import (
+    HttpResponse,
+    render,
+    get_list_or_404,
+    get_object_or_404,
+    HttpResponseRedirect,
+)
+from django.http import HttpRequest, HttpResponseNotFound
+from django.urls import reverse
+from django.views import generic
+from .models import Question, Choice
 
 
 def questionMapper(question: Question):
@@ -11,26 +21,40 @@ def questionMapper(question: Question):
     }
     return questiondict
 
+class IndexView(generic.ListView):
+    template_name='polls/index.html'
+    context_object_name='latest_question_list'
 
-# Create your views here.
-def index(request: HttpRequest):
-    allQuestions = get_list_or_404(Question.objects.order_by("pub_date")[:10])
-    context = {"latest_question_list": allQuestions}
+    def get_queryset(self) -> QuerySet[Question]:
+        return Question.objects.order_by("pub_date")[:10]
+class DetailView(generic.DetailView):
+    template_name='polls/details.html'
+    model=Question
 
-    return render(request, "polls/index.html", context)
-
-
-def detail(request: HttpRequest, question_id: int):
-    question_item = get_object_or_404(Question, pk=question_id)
-    context = {"details": question_item}
-
-    return render(request, "polls/details.html", context)
-
-
-def results(request: HttpRequest, question_id: int):
-    response = "You're looking at the results of question %s."
-    return HttpResponse(response % question_id)
-
+class ResultsView(generic.DetailView):
+    template_name='polls/results.html'
+    model=Question
 
 def vote(request: HttpRequest, question_id: int):
-    return HttpResponse("You're voting on question %s." % question_id)
+    method = request.method
+    post_body = request.POST
+
+    if method.lower() != "post":
+        return HttpResponseNotFound()
+    question = get_object_or_404(Question, pk=question_id)
+    try:
+        choice = Choice.objects.get(pk=post_body["choice"], question=question)
+    except (KeyError, Choice.DoesNotExist):
+        return render(
+            request,
+            "polls/details.html",
+            {
+                "question": question,
+                "error_message": "Choice id is not defined or invalid",
+            },
+        )
+    else:
+        choice.votes += 1
+        choice.save()
+
+        return HttpResponseRedirect(reverse("polls:results", args=(question_id,)))
