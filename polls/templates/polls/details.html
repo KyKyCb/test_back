@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>#{{details.id}}</h1>
+    <h2>{{details.question_text}}</h2>
+    <ul>
+      {% for choice in details.choice_set.all %} {{ choice.choice_text }}
+      {%endfor%}
+    </ul>
+  </body>
+</html>
