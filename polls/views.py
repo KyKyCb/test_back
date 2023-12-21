@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponseNotFound
 from django.urls import reverse
 from django.views import generic
 from .models import Question, Choice
-
+from django.utils import timezone
 
 def questionMapper(question: Question):
     questiondict = {
@@ -26,10 +26,14 @@ class IndexView(generic.ListView):
     context_object_name='latest_question_list'
 
     def get_queryset(self) -> QuerySet[Question]:
-        return Question.objects.order_by("pub_date")[:10]
+
+        return Question.objects.filter(pub_date__lte=timezone.now()).order_by("-pub_date")[:10]
 class DetailView(generic.DetailView):
     template_name='polls/details.html'
     model=Question
+
+    def get_queryset(self) -> QuerySet[Question]:
+        return Question.objects.filter(pub_date__lte=timezone.now())
 
 class ResultsView(generic.DetailView):
     template_name='polls/results.html'
